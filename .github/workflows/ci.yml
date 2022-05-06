@@ -1,0 +1,55 @@
+name: CI
+
+on: [pull_request, push]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: full
+  NIGHTLY: nightly-2022-05-05
+
+jobs:
+  msrv_and_minimal_versions:
+    name: Check MSRV and minimal-versions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      # workaround for https://github.com/rust-lang/rustup/issues/2925
+      - run: echo "MSRV=$(cargo metadata --format-version=1 --no-deps | jql '"packages"|={"name":"encase"}|"rust_version"' | jql -r '[0]')" >> $GITHUB_ENV
+
+      - name: Cache cargo files
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache MSRV toolchain
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.rustup/toolchains/${{ env.MSRV }}-*
+            ~/.rustup/update-hashes/${{ env.MSRV }}-*
+          key: ${{ runner.os }}-toolchain-${{ env.MSRV }}
+
+      - name: Cache NIGHTLY toolchain
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.rustup/toolchains/${{ env.NIGHTLY }}-*
+            ~/.rustup/update-hashes/${{ env.NIGHTLY }}-*
+          key: ${{ runner.os }}-toolchain-${{ env.NIGHTLY }}
+
+      - run: cargo install jql --version ^4
+      - run: cargo install cargo-hack --version ^0.5
+
+      - run: rustup toolchain install --no-self-update --profile=minimal $MSRV
+      - run: rustup toolchain install --no-self-update --profile=minimal $NIGHTLY
+
+      # -Z avoid-dev-deps doesn't work
+      - run: cargo +$NIGHTLY hack generate-lockfile --remove-dev-deps -Z minimal-versions
+      - run: cargo +$MSRV check --workspace --all-features
