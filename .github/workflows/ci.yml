@@ -53,3 +53,39 @@ jobs:
       # -Z avoid-dev-deps doesn't work
       - run: cargo +$NIGHTLY hack generate-lockfile --remove-dev-deps -Z minimal-versions
       - run: cargo +$MSRV check --workspace --all-features
+
+  format:
+    name: Check format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Cache stable toolchain
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.rustup/toolchains/stable-*
+            ~/.rustup/update-hashes/stable-*
+          key: ${{ runner.os }}-toolchain-stable
+
+      - run: rustup toolchain install --no-self-update stable
+
+      - run: cargo +stable fmt --check --all
+
+  clippy:
+    name: Check clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Cache stable toolchain
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.rustup/toolchains/stable-*
+            ~/.rustup/update-hashes/stable-*
+          key: ${{ runner.os }}-toolchain-stable
+
+      - run: rustup toolchain install --no-self-update stable
+
+      - run: cargo +stable clippy --all-targets --workspace --all-features -- -D warnings
