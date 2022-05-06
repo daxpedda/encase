@@ -18,12 +18,13 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
+            ~/.cargo/.crates.toml
             ~/.cargo/bin/
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock', '.github/workflows/ci.yml') }}
 
       - run: cargo install jql --version ^4
       - run: cargo install cargo-hack --version ^0.5
