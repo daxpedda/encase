@@ -24,7 +24,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock', '.github/workflows/ci.yml') }}
+          key: ${{ runner.os }}-cargo-${{ github.job }}
 
       - run: cargo install jql --version ^4
       - run: cargo install cargo-hack --version ^0.5
@@ -88,5 +88,15 @@ jobs:
           key: ${{ runner.os }}-toolchain-stable
 
       - run: rustup toolchain install --no-self-update stable
+
+      - name: Cache cargo files
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-general
 
       - run: cargo +stable clippy --all-targets --workspace --all-features -- -D warnings
