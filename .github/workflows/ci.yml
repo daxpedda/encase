@@ -14,9 +14,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # workaround for https://github.com/rust-lang/rustup/issues/2925
-      - run: echo "MSRV=$(cargo metadata --format-version=1 --no-deps | jql '"packages"|={"name":"encase"}|"rust_version"' | jql -r '[0]')" >> $GITHUB_ENV
-
       - name: Cache cargo files
         uses: actions/cache@v3
         with:
@@ -27,6 +24,12 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - run: cargo install jql --version ^4
+      - run: cargo install cargo-hack --version ^0.5
+
+      # workaround for https://github.com/rust-lang/rustup/issues/2925
+      - run: echo "MSRV=$(cargo metadata --format-version=1 --no-deps | jql '"packages"|={"name":"encase"}|"rust_version"' | jql -r '[0]')" >> $GITHUB_ENV
 
       - name: Cache MSRV toolchain
         uses: actions/cache@v3
@@ -43,9 +46,6 @@ jobs:
             ~/.rustup/toolchains/${{ env.NIGHTLY }}-*
             ~/.rustup/update-hashes/${{ env.NIGHTLY }}-*
           key: ${{ runner.os }}-toolchain-${{ env.NIGHTLY }}
-
-      - run: cargo install jql --version ^4
-      - run: cargo install cargo-hack --version ^0.5
 
       - run: rustup toolchain install --no-self-update --profile=minimal $MSRV
       - run: rustup toolchain install --no-self-update --profile=minimal $NIGHTLY
