@@ -53,8 +53,8 @@ jobs:
             ~/.rustup/update-hashes/${{ env.NIGHTLY }}-${{ env.HOST }}
           key: toolchain-${{ env.NIGHTLY }}-${{ env.HOST }}
 
-      - run: rustup toolchain install --no-self-update --profile=minimal $MSRV
-      - run: rustup toolchain install --no-self-update --profile=minimal $NIGHTLY
+      - run: rustup toolchain install $MSRV --no-self-update --profile=minimal
+      - run: rustup toolchain install $NIGHTLY --no-self-update --profile=minimal
 
       - run: rustc +$MSRV -vV > toolchain-version
       - run: echo "${{ hashFiles('toolchain-version') }}"
@@ -90,7 +90,7 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
         if: steps.cache.outputs.cache-hit == 'true'
 
-      - run: rustup toolchain install --no-self-update --profile=minimal --component rustfmt stable
+      - run: rustup toolchain install stable --no-self-update --profile=minimal --component rustfmt
 
       - run: |
           echo "updated-toolchain-version<<EOF" >> $GITHUB_ENV
@@ -125,7 +125,7 @@ jobs:
             ~/.rustup/update-hashes/stable-*
           key: ${{ runner.os }}-toolchain-stable
 
-      - run: rustup toolchain install --no-self-update --profile=minimal --component rustfmt,clippy stable
+      - run: rustup toolchain install stable --no-self-update --profile=minimal --component rustfmt,clippy
 
       - name: Cache cargo files
         uses: actions/cache@v3
@@ -153,7 +153,7 @@ jobs:
   #           ~/.rustup/update-hashes/stable-*
   #         key: ${{ runner.os }}-toolchain-stable
 
-  #     - run: rustup toolchain install --no-self-update --profile=minimal --component rustfmt,clippy stable
+  #     - run: rustup toolchain install stable --no-self-update --profile=minimal --component rustfmt,clippy
 
   #     - name: Cache cargo files
   #       uses: actions/cache@v3
