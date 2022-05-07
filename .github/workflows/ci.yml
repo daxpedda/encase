@@ -56,7 +56,7 @@ jobs:
       - run: rustup toolchain install --no-self-update --profile=minimal $MSRV
       - run: rustup toolchain install --no-self-update --profile=minimal $NIGHTLY
 
-      - run: echo "${{ hashFiles(format('~/.rustup/toolchains/{0}-{1}', env.MSRV, env.HOST)) }}"
+      - run: echo "${{ hashFiles(format('~/.rustup/toolchains/{0}-{1}/**', env.MSRV, env.HOST)) }}"
 
       # -Z avoid-dev-deps doesn't work
       - run: cargo +$NIGHTLY hack generate-lockfile --remove-dev-deps -Z minimal-versions
