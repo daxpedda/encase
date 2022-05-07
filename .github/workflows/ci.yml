@@ -82,13 +82,17 @@ jobs:
           key: toolchain-stable-${{ env.HOST }}
 
       - run: |
-          echo "initial-toolchain-versio<<EOF$(rustc +stable -vV)EOF" >> $GITHUB_ENV
+          echo "initial-toolchain-versio<<EOF" >> $GITHUB_ENV
+          echo "$(rustc +stable -vV)" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
         if: steps.cache.outputs.cache-hit == 'true'
 
       - run: rustup toolchain install --no-self-update --profile=minimal --component rustfmt,clippy stable
 
       - run: |
-          echo "updated-toolchain-version<<EOF$(rustc +stable -vV)EOF" >> $GITHUB_ENV
+          echo "updated-toolchain-versio<<EOF" >> $GITHUB_ENV
+          echo "$(rustc +stable -vV)" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Save toolchain to cache
         if: env.initial-toolchain-version != env.updated-toolchain-version
