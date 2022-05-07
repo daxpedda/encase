@@ -37,27 +37,79 @@ jobs:
       - run: |
           echo "HOST=$(rustc -vV | sed -n 's|host: ||p')" >> $GITHUB_ENV
 
-      - name: Cache MSRV toolchain
-        uses: actions/cache@v3
+      - name: Restore MSRV toolchain from cache
+        id: cache
+        uses: martijnhols/actions-cache/restore@v3
         with:
           path: |
-            ~/.rustup/toolchains/${{ env.MSRV }}-${{ env.HOST }}
-            ~/.rustup/update-hashes/${{ env.MSRV }}-${{ env.HOST }}
-          key: toolchain-${{ env.MSRV }}-${{ env.HOST }}
+            ~/.rustup/toolchains/$MSRV-${{ env.HOST }}
+            ~/.rustup/update-hashes/$MSRV-${{ env.HOST }}
+          key: toolchain-$MSRV-${{ env.HOST }}
 
-      - name: Cache NIGHTLY toolchain
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.rustup/toolchains/${{ env.NIGHTLY }}-${{ env.HOST }}
-            ~/.rustup/update-hashes/${{ env.NIGHTLY }}-${{ env.HOST }}
-          key: toolchain-${{ env.NIGHTLY }}-${{ env.HOST }}
+      - run: |
+          echo "initial-toolchain-version<<EOF" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          echo "$(rustc +$MSRV -vV)" >> $GITHUB_ENV
+          echo "components:" >> $GITHUB_ENV
+          echo "$(rustup component list --installed --toolchain $MSRV)" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+        if: steps.cache.outputs.cache-hit == 'true'
 
       - run: rustup toolchain install $MSRV --no-self-update --profile=minimal
+
+      - run: |
+          echo "updated-toolchain-version<<EOF" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          echo "$(rustc +$MSRV -vV)" >> $GITHUB_ENV
+          echo "components:" >> $GITHUB_ENV
+          echo "$(rustup component list --installed --toolchain $MSRV)" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Save MSRV toolchain to cache
+        if: env.initial-toolchain-version != env.updated-toolchain-version
+        uses: martijnhols/actions-cache/save@v3
+        with:
+          path: |
+            ~/.rustup/toolchains/$MSRV-${{ env.HOST }}
+            ~/.rustup/update-hashes/$MSRV-${{ env.HOST }}
+          key: ${{ steps.cache.outputs.primary-key }}
+
+      - name: Restore nightly toolchain from cache
+        id: cache
+        uses: martijnhols/actions-cache/restore@v3
+        with:
+          path: |
+            ~/.rustup/toolchains/$NIGHTLY-${{ env.HOST }}
+            ~/.rustup/update-hashes/$NIGHTLY-${{ env.HOST }}
+          key: toolchain-$NIGHTLY-${{ env.HOST }}
+
+      - run: |
+          echo "initial-toolchain-version<<EOF" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          echo "$(rustc +$NIGHTLY -vV)" >> $GITHUB_ENV
+          echo "components:" >> $GITHUB_ENV
+          echo "$(rustup component list --installed --toolchain $NIGHTLY)" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+        if: steps.cache.outputs.cache-hit == 'true'
+
       - run: rustup toolchain install $NIGHTLY --no-self-update --profile=minimal
 
-      - run: rustc +$MSRV -vV > toolchain-version
-      - run: echo "${{ hashFiles('toolchain-version') }}"
+      - run: |
+          echo "updated-toolchain-version<<EOF" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          echo "$(rustc +$NIGHTLY -vV)" >> $GITHUB_ENV
+          echo "components:" >> $GITHUB_ENV
+          echo "$(rustup component list --installed --toolchain $NIGHTLY)" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Save nightly toolchain to cache
+        if: env.initial-toolchain-version != env.updated-toolchain-version
+        uses: martijnhols/actions-cache/save@v3
+        with:
+          path: |
+            ~/.rustup/toolchains/$NIGHTLY-${{ env.HOST }}
+            ~/.rustup/update-hashes/$NIGHTLY-${{ env.HOST }}
+          key: ${{ steps.cache.outputs.primary-key }}
 
       # -Z avoid-dev-deps doesn't work
       - run: cargo +$NIGHTLY hack generate-lockfile --remove-dev-deps -Z minimal-versions
@@ -90,7 +142,7 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
         if: steps.cache.outputs.cache-hit == 'true'
 
-      - run: rustup toolchain install stable --no-self-update --profile=minimal --component rustfmt
+      - run: rustup toolchain install stable --no-self-update --profile=minimal --component rustfmt,clippy
 
       - run: |
           echo "updated-toolchain-version<<EOF" >> $GITHUB_ENV
@@ -117,15 +169,45 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Cache stable toolchain
-        uses: actions/cache@v3
+      - run: |
+          echo "HOST=$(rustc -vV | sed -n 's|host: ||p')" >> $GITHUB_ENV
+
+      - name: Restore toolchain from cache
+        id: cache
+        uses: martijnhols/actions-cache/restore@v3
         with:
           path: |
-            ~/.rustup/toolchains/stable-*
-            ~/.rustup/update-hashes/stable-*
-          key: ${{ runner.os }}-toolchain-stable
+            ~/.rustup/toolchains/stable-${{ env.HOST }}
+            ~/.rustup/update-hashes/stable-${{ env.HOST }}
+          key: toolchain-stable-${{ env.HOST }}
+
+      - run: |
+          echo "initial-toolchain-version<<EOF" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          echo "$(rustc +stable -vV)" >> $GITHUB_ENV
+          echo "components:" >> $GITHUB_ENV
+          echo "$(rustup component list --installed --toolchain stable)" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+        if: steps.cache.outputs.cache-hit == 'true'
 
       - run: rustup toolchain install stable --no-self-update --profile=minimal --component rustfmt,clippy
+
+      - run: |
+          echo "updated-toolchain-version<<EOF" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          echo "$(rustc +stable -vV)" >> $GITHUB_ENV
+          echo "components:" >> $GITHUB_ENV
+          echo "$(rustup component list --installed --toolchain stable)" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Save toolchain to cache
+        if: env.initial-toolchain-version != env.updated-toolchain-version
+        uses: martijnhols/actions-cache/save@v3
+        with:
+          path: |
+            ~/.rustup/toolchains/stable-${{ env.HOST }}
+            ~/.rustup/update-hashes/stable-${{ env.HOST }}
+          key: ${{ steps.cache.outputs.primary-key }}
 
       - name: Cache cargo files
         uses: actions/cache@v3
