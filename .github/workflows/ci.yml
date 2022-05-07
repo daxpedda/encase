@@ -83,9 +83,10 @@ jobs:
 
       - run: |
           echo "initial-toolchain-version<<EOF" >> $GITHUB_ENV
-          echo "\n$(rustc +stable -vV)" >> $GITHUB_ENV
-          echo "\ncomponents:" >> $GITHUB_ENV
-          echo "\n$(rustup component list --installed --toolchain stable)" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          echo "$(rustc +stable -vV)" >> $GITHUB_ENV
+          echo "components:" >> $GITHUB_ENV
+          echo "$(rustup component list --installed --toolchain stable)" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
         if: steps.cache.outputs.cache-hit == 'true'
 
@@ -93,9 +94,10 @@ jobs:
 
       - run: |
           echo "updated-toolchain-version<<EOF" >> $GITHUB_ENV
-          echo "\n$(rustc +stable -vV)" >> $GITHUB_ENV
-          echo "\ncomponents:" >> $GITHUB_ENV
-          echo "\n$(rustup component list --installed --toolchain stable)" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          echo "$(rustc +stable -vV)" >> $GITHUB_ENV
+          echo "components:" >> $GITHUB_ENV
+          echo "$(rustup component list --installed --toolchain stable)" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
       - name: Save toolchain to cache
