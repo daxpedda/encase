@@ -49,9 +49,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            ~/.rustup/toolchains/${{ env.NIGHTLY }}-*
-            ~/.rustup/update-hashes/${{ env.NIGHTLY }}-*
-          key: ${{ runner.os }}-toolchain-${{ env.NIGHTLY }}
+            ~/.rustup/toolchains/${{ env.NIGHTLY }}-${{ env.HOST }}
+            ~/.rustup/update-hashes/${{ env.NIGHTLY }}-${{ env.HOST }}
+          key: toolchain-${{ env.NIGHTLY }}-${{ env.HOST }}
 
       - run: rustup toolchain install --no-self-update --profile=minimal $MSRV
       - run: rustup toolchain install --no-self-update --profile=minimal $NIGHTLY
@@ -69,15 +69,35 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Cache stable toolchain
-        uses: actions/cache@v3
+      - run: |
+          echo "HOST=$(rustc -vV | sed -n 's|host: ||p')" >> $GITHUB_ENV
+
+      - name: Restore toolchain from cache
+        id: cache
+        uses: martijnhols/actions-cache/restore@v3
         with:
           path: |
-            ~/.rustup/toolchains/stable-*
-            ~/.rustup/update-hashes/stable-*
-          key: ${{ runner.os }}-toolchain-stable
+            ~/.rustup/toolchains/stable-${{ env.HOST }}
+            ~/.rustup/update-hashes/stable-${{ env.HOST }}
+          key: toolchain-stable-${{ env.HOST }}
+
+      - run: |
+          echo "initial-toolchain-version=$(rustc +stable -vV)" >> $GITHUB_ENV
+        if: steps.cache.outputs.cache-hit == 'true'
 
       - run: rustup toolchain install --no-self-update --profile=minimal --component rustfmt,clippy stable
+
+      - run: |
+          echo "updated-toolchain-version=$(rustc +stable -vV)" >> $GITHUB_ENV
+
+      - name: Save toolchain to cache
+        if: env.initial-toolchain-version != env.updated-toolchain-version
+        uses: martijnhols/actions-cache/save@v3
+        with:
+          path: |
+            ~/.rustup/toolchains/stable-${{ env.HOST }}
+            ~/.rustup/update-hashes/stable-${{ env.HOST }}
+          key: ${{ steps.cache.outputs.primary-key }}
 
       - run: cargo +stable fmt --check --all
 
