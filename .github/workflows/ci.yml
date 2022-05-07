@@ -90,7 +90,7 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
         if: steps.cache.outputs.cache-hit == 'true'
 
-      - run: rustup toolchain install --no-self-update --profile=minimal --component rustfmt,clippy stable
+      - run: rustup toolchain install --no-self-update --profile=minimal --component rustfmt stable
 
       - run: |
           echo "updated-toolchain-version<<EOF" >> $GITHUB_ENV
