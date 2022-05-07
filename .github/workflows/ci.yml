@@ -38,7 +38,7 @@ jobs:
           echo "HOST=$(rustc -vV | sed -n 's|host: ||p')" >> $GITHUB_ENV
 
       - name: Restore MSRV toolchain from cache
-        id: cache
+        id: cache-msrv
         uses: martijnhols/actions-cache/restore@v3
         with:
           path: |
@@ -53,7 +53,7 @@ jobs:
           echo "components:" >> $GITHUB_ENV
           echo "$(rustup component list --installed --toolchain $MSRV)" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-        if: steps.cache.outputs.cache-hit == 'true'
+        if: steps.cache-msrv.outputs.cache-hit == 'true'
 
       - run: rustup toolchain install $MSRV --no-self-update --profile=minimal
 
@@ -72,10 +72,10 @@ jobs:
           path: |
             ~/.rustup/toolchains/$MSRV-${{ env.HOST }}
             ~/.rustup/update-hashes/$MSRV-${{ env.HOST }}
-          key: ${{ steps.cache.outputs.primary-key }}
+          key: ${{ steps.cache-msrv.outputs.primary-key }}
 
       - name: Restore nightly toolchain from cache
-        id: cache
+        id: cache-nightly
         uses: martijnhols/actions-cache/restore@v3
         with:
           path: |
@@ -90,7 +90,7 @@ jobs:
           echo "components:" >> $GITHUB_ENV
           echo "$(rustup component list --installed --toolchain $NIGHTLY)" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-        if: steps.cache.outputs.cache-hit == 'true'
+        if: steps.cache-nightly.outputs.cache-hit == 'true'
 
       - run: rustup toolchain install $NIGHTLY --no-self-update --profile=minimal
 
@@ -109,7 +109,7 @@ jobs:
           path: |
             ~/.rustup/toolchains/$NIGHTLY-${{ env.HOST }}
             ~/.rustup/update-hashes/$NIGHTLY-${{ env.HOST }}
-          key: ${{ steps.cache.outputs.primary-key }}
+          key: ${{ steps.cache-nightly.outputs.primary-key }}
 
       # -Z avoid-dev-deps doesn't work
       - run: cargo +$NIGHTLY hack generate-lockfile --remove-dev-deps -Z minimal-versions
