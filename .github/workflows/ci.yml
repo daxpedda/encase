@@ -66,7 +66,7 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
 
       - name: Save MSRV toolchain to cache
-        if: env.initial-toolchain-msrv-version != env.updated-toolchain-msrv-version
+        # if: env.initial-toolchain-msrv-version != env.updated-toolchain-msrv-version
         uses: martijnhols/actions-cache/save@v3
         with:
           path: |
