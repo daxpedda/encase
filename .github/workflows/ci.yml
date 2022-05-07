@@ -14,6 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      # https://github.com/rust-lang/cargo/issues/8841
+      # https://github.com/tensorflow/tensorboard/pull/4480#issuecomment-745904483
       - name: Cache cargo files
         uses: actions/cache@v3
         with:
@@ -32,13 +34,16 @@ jobs:
       # workaround for https://github.com/rust-lang/rustup/issues/2925
       - run: echo "MSRV=$(cargo metadata --format-version=1 --no-deps | jql '"packages"|={"name":"encase"}|"rust_version"' | jql -r '[0]')" >> $GITHUB_ENV
 
+      - run: |
+          echo "HOST=$(rustc -vV | sed -n 's|host: ||p')" >> $GITHUB_ENV
+
       - name: Cache MSRV toolchain
         uses: actions/cache@v3
         with:
           path: |
-            ~/.rustup/toolchains/${{ env.MSRV }}-*
-            ~/.rustup/update-hashes/${{ env.MSRV }}-*
-          key: ${{ runner.os }}-toolchain-${{ env.MSRV }}
+            ~/.rustup/toolchains/${{ env.MSRV }}-${{ env.HOST }}
+            ~/.rustup/update-hashes/${{ env.MSRV }}-${{ env.HOST }}
+          key: toolchain-${{ env.MSRV }}-${{ env.HOST }}
 
       - name: Cache NIGHTLY toolchain
         uses: actions/cache@v3
@@ -50,6 +55,8 @@ jobs:
 
       - run: rustup toolchain install --no-self-update --profile=minimal $MSRV
       - run: rustup toolchain install --no-self-update --profile=minimal $NIGHTLY
+
+      - run: echo "${{ hashFiles(format('~/.rustup/toolchains/{0}-{1}', env.MSRV, env.HOST)) }}"
 
       # -Z avoid-dev-deps doesn't work
       - run: cargo +$NIGHTLY hack generate-lockfile --remove-dev-deps -Z minimal-versions
@@ -69,7 +76,7 @@ jobs:
             ~/.rustup/update-hashes/stable-*
           key: ${{ runner.os }}-toolchain-stable
 
-      - run: rustup toolchain install --no-self-update stable
+      - run: rustup toolchain install --no-self-update --profile=minimal --component rustfmt,clippy stable
 
       - run: cargo +stable fmt --check --all
 
@@ -87,7 +94,7 @@ jobs:
             ~/.rustup/update-hashes/stable-*
           key: ${{ runner.os }}-toolchain-stable
 
-      - run: rustup toolchain install --no-self-update stable
+      - run: rustup toolchain install --no-self-update --profile=minimal --component rustfmt,clippy stable
 
       - name: Cache cargo files
         uses: actions/cache@v3
@@ -115,7 +122,7 @@ jobs:
             ~/.rustup/update-hashes/stable-*
           key: ${{ runner.os }}-toolchain-stable
 
-      - run: rustup toolchain install --no-self-update stable
+      - run: rustup toolchain install --no-self-update --profile=minimal --component rustfmt,clippy stable
 
       - name: Cache cargo files
         uses: actions/cache@v3
