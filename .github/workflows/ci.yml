@@ -83,7 +83,9 @@ jobs:
 
       - run: |
           echo "initial-toolchain-version<<EOF" >> $GITHUB_ENV
-          echo "$(rustc +stable -vV)" >> $GITHUB_ENV
+          echo "\n$(rustc +stable -vV)" >> $GITHUB_ENV
+          echo "\ncomponents:" >> $GITHUB_ENV
+          echo "\n$(rustup component list --installed --toolchain stable)" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
         if: steps.cache.outputs.cache-hit == 'true'
 
@@ -91,7 +93,9 @@ jobs:
 
       - run: |
           echo "updated-toolchain-version<<EOF" >> $GITHUB_ENV
-          echo "$(rustc +stable -vV)" >> $GITHUB_ENV
+          echo "\n$(rustc +stable -vV)" >> $GITHUB_ENV
+          echo "\ncomponents:" >> $GITHUB_ENV
+          echo "\n$(rustup component list --installed --toolchain stable)" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
       - name: Save toolchain to cache
@@ -133,30 +137,30 @@ jobs:
 
       - run: cargo +stable clippy --all-targets --workspace --all-features -- -D warnings
 
-  doc_tests:
-    name: Run doc tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
+  # doc_tests:
+  #   name: Run doc tests
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
 
-      - name: Cache stable toolchain
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.rustup/toolchains/stable-*
-            ~/.rustup/update-hashes/stable-*
-          key: ${{ runner.os }}-toolchain-stable
+  #     - name: Cache stable toolchain
+  #       uses: actions/cache@v3
+  #       with:
+  #         path: |
+  #           ~/.rustup/toolchains/stable-*
+  #           ~/.rustup/update-hashes/stable-*
+  #         key: ${{ runner.os }}-toolchain-stable
 
-      - run: rustup toolchain install --no-self-update --profile=minimal --component rustfmt,clippy stable
+  #     - run: rustup toolchain install --no-self-update --profile=minimal --component rustfmt,clippy stable
 
-      - name: Cache cargo files
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-general
+  #     - name: Cache cargo files
+  #       uses: actions/cache@v3
+  #       with:
+  #         path: |
+  #           ~/.cargo/registry/index/
+  #           ~/.cargo/registry/cache/
+  #           ~/.cargo/git/db/
+  #           target/
+  #         key: ${{ runner.os }}-cargo-general
 
-      - run: cargo +stable test --doc --workspace --features mint,glam
+  #     - run: cargo +stable test --doc --workspace --features mint,glam
