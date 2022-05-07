@@ -44,7 +44,7 @@ jobs:
           path: |
             ~/.rustup/toolchains/$MSRV-${{ env.HOST }}
             ~/.rustup/update-hashes/$MSRV-${{ env.HOST }}
-          key: toolchain-${{ env.MSRV }}-${{ env.HOST }}
+          key: -toolchain-${{ env.MSRV }}-${{ env.HOST }}
 
       - run: |
           echo "initial-toolchain-msrv-version<<EOF" >> $GITHUB_ENV
@@ -81,7 +81,7 @@ jobs:
           path: |
             ~/.rustup/toolchains/$NIGHTLY-${{ env.HOST }}
             ~/.rustup/update-hashes/$NIGHTLY-${{ env.HOST }}
-          key: toolchain-${{ env.NIGHTLY }}-${{ env.HOST }}
+          key: -toolchain-${{ env.NIGHTLY }}-${{ env.HOST }}
 
       - run: |
           echo "initial-toolchain-nightly-version<<EOF" >> $GITHUB_ENV
