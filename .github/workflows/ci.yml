@@ -46,6 +46,8 @@ jobs:
           name: artifact-${{ env.TOOLCHAIN_KEY }}
         continue-on-error: true
 
+      - run: echo "${{ hashFiles('$TOOLCHAIN_KEY') }}"
+
       - name: Restore toolchain from cache
         id: cache
         uses: martijnhols/actions-cache/restore@v3
@@ -53,7 +55,7 @@ jobs:
           path: |
             ~/.rustup/toolchains/${{ env.TOOLCHAIN_FULL_NAME }}
             ~/.rustup/update-hashes/${{ env.TOOLCHAIN_FULL_NAME }}
-          key: ${{ env.TOOLCHAIN_KEY }}-${{ hashFiles('${{ env.TOOLCHAIN_KEY }}') }}
+          key: ${{ env.TOOLCHAIN_KEY }}-${{ hashFiles(env.TOOLCHAIN_KEY) }}
 
       - name: Set initial toolchain version to environment variable
         run: |
