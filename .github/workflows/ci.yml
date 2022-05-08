@@ -11,38 +11,40 @@ env:
 
 jobs:
   install_binaries:
-    name: Install cargo binaries
+    name: Install ${{ matrix.tool }} binary
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        - tool: sd
+          version: 0.7.6
+        - tool: jql
+          version: 4.0.3
+        - tool: cargo-hack
+          version: 0.5.12
+        - tool: sccache
+          version: 0.3.0
+          extra: --no-default-features
     steps:
-      - name: Check if binaries are already cached
+      - name: Check if binary is already cached
         id: cache
         uses: martijnhols/actions-cache/check@v3
         with:
           path: |
-            ~/.cargo/bin/sd
-            ~/.cargo/bin/jql
-            ~/.cargo/bin/cargo-hack
-            ~/.cargo/bin/sccache
-          key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-jql4.0.3-cargo-hack0.5.12-sccache0.3.0
+            ~/.cargo/bin/${{ matrix.tool }}
+          key: ---cargo-binaries-${{ runner.os }}-${{ matrix.tool }}-${{ matrix.version }}
 
-      - name: Install binaries
+      - name: Install binary
         if: steps.cache.outputs.cache-hit != 'true'
-        run: |
-          cargo install sd --version '=0.7.6'
-          cargo install jql --version '=4.0.3'
-          cargo install cargo-hack --version '=0.5.12'
-          cargo install sccache --no-default-features --version '=0.3.0'
+        run: cargo install ${{ matrix.tool }} --version '=${{ matrix.version }}' ${{ matrix.extra }}
 
-      - name: Save binaries to cache
+      - name: Save binary to cache
         if: steps.cache.outputs.cache-hit != 'true'
         uses: martijnhols/actions-cache/save@v3
         with:
           path: |
-            ~/.cargo/bin/sd
-            ~/.cargo/bin/jql
-            ~/.cargo/bin/cargo-hack
-            ~/.cargo/bin/sccache
-          key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-jql4.0.3-cargo-hack0.5.12-sccache0.3.0
+            ~/.cargo/bin/${{ matrix.tool }}
+          key: ---cargo-binaries-${{ runner.os }}-${{ matrix.tool }}-${{ matrix.version }}
 
   toolchain_msrv:
     name: Install MSRV toolchain
@@ -51,12 +53,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Restore cargo binaries from cache
+      - name: Restore sd bin from cache
         uses: martijnhols/actions-cache/restore@v3
         with:
           path: |
             ~/.cargo/bin/sd
-          key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-jql4.0.3-cargo-hack0.5.12-sccache0.3.0
+          key: ---cargo-binaries-${{ runner.os }}-sd-0.7.6
           required: true
 
       # workaround for https://github.com/rust-lang/rustup/issues/2925
@@ -97,12 +99,12 @@ jobs:
     needs: [install_binaries]
     steps:
 
-      - name: Restore cargo binaries from cache
+      - name: Restore sd bin from cache
         uses: martijnhols/actions-cache/restore@v3
         with:
           path: |
             ~/.cargo/bin/sd
-          key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-jql4.0.3-cargo-hack0.5.12-sccache0.3.0
+          key: ---cargo-binaries-${{ runner.os }}-sd-0.7.6
           required: true
 
       # workaround for https://github.com/rust-lang/rustup/issues/2925
@@ -143,14 +145,28 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Restore cargo binaries from cache
+      - name: Restore sd bin from cache
         uses: martijnhols/actions-cache/restore@v3
         with:
           path: |
             ~/.cargo/bin/sd
+          key: ---cargo-binaries-${{ runner.os }}-sd-0.7.6
+          required: true
+
+      - name: Restore jql bin from cache
+        uses: martijnhols/actions-cache/restore@v3
+        with:
+          path: |
             ~/.cargo/bin/jql
+          key: ---cargo-binaries-${{ runner.os }}-jql-4.0.3
+          required: true
+
+      - name: Restore cargo-hack bin from cache
+        uses: martijnhols/actions-cache/restore@v3
+        with:
+          path: |
             ~/.cargo/bin/cargo-hack
-          key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-jql4.0.3-cargo-hack0.5.12-sccache0.3.0
+          key: ---cargo-binaries-${{ runner.os }}-cargo-hack-0.5.12
           required: true
 
       # workaround for https://github.com/rust-lang/rustup/issues/2925
