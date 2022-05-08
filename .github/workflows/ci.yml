@@ -16,6 +16,18 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      # FIX: this will be stuck on sd v0.7
+      - name: Cache cargo files
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/.crates.toml
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo-${{ github.job }}-sd^0.7
+
       - run: cargo install sd --version ^0.7
 
       # workaround for https://github.com/rust-lang/rustup/issues/2925
@@ -94,6 +106,7 @@ jobs:
 
       # https://github.com/rust-lang/cargo/issues/8841
       # https://github.com/tensorflow/tensorboard/pull/4480#issuecomment-745904483
+      # https://doc.rust-lang.org/cargo/guide/cargo-home.html
       - name: Cache cargo files
         uses: actions/cache@v3
         with:
