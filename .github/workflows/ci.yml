@@ -20,7 +20,7 @@ jobs:
         with:
           path: |
             ~/.cargo/bin/
-          key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-jql4.0.3-cargo-hack0.5.12
+          key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-jql4.0.3-cargo-hack0.5.12-sccache0.3.0
 
       - name: Install binaries
         if: steps.cache.outputs.cache-hit != 'true'
@@ -28,6 +28,7 @@ jobs:
           cargo install sd --version '=0.7.6'
           cargo install jql --version '=4.0.3'
           cargo install cargo-hack --version '=0.5.12'
+          cargo install sccache --no-default-features --version '=0.3.0'
 
       - name: Save binaries to cache
         if: steps.cache.outputs.cache-hit != 'true'
@@ -35,7 +36,7 @@ jobs:
         with:
           path: |
             ~/.cargo/bin/
-          key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-jql4.0.3-cargo-hack0.5.12
+          key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-jql4.0.3-cargo-hack0.5.12-sccache0.3.0
 
   toolchain_msrv:
     name: Install MSRV toolchain
@@ -49,7 +50,7 @@ jobs:
         with:
           path: |
             ~/.cargo/bin/
-          key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-jql4.0.3-cargo-hack0.5.12
+          key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-jql4.0.3-cargo-hack0.5.12-sccache0.3.0
           required: true
 
       # workaround for https://github.com/rust-lang/rustup/issues/2925
@@ -95,7 +96,7 @@ jobs:
         with:
           path: |
             ~/.cargo/bin/
-          key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-jql4.0.3-cargo-hack0.5.12
+          key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-jql4.0.3-cargo-hack0.5.12-sccache0.3.0
           required: true
 
       # workaround for https://github.com/rust-lang/rustup/issues/2925
@@ -141,7 +142,7 @@ jobs:
         with:
           path: |
             ~/.cargo/bin/
-          key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-jql4.0.3-cargo-hack0.5.12
+          key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-jql4.0.3-cargo-hack0.5.12-sccache0.3.0
           required: true
 
       # workaround for https://github.com/rust-lang/rustup/issues/2925
