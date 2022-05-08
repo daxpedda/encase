@@ -11,40 +11,41 @@ env:
 
 jobs:
   install_binaries:
-    name: Install ${{ matrix.tool }} binary
+    name: Install ${{ matrix.tool.name }} binary
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        - tool: sd
-          version: 0.7.6
-        - tool: jql
-          version: 4.0.3
-        - tool: cargo-hack
-          version: 0.5.12
-        - tool: sccache
-          version: 0.3.0
-          extra: --no-default-features
+        tool:
+          - name: sd
+            version: 0.7.6
+          - name: jql
+            version: 4.0.3
+          - name: cargo-hack
+            version: 0.5.12
+          - name: sccache
+            version: 0.3.0
+            extra: --no-default-features
     steps:
       - name: Check if binary is already cached
         id: cache
         uses: martijnhols/actions-cache/check@v3
         with:
           path: |
-            ~/.cargo/bin/${{ matrix.tool }}
-          key: ---cargo-binaries-${{ runner.os }}-${{ matrix.tool }}-${{ matrix.version }}
+            ~/.cargo/bin/${{ matrix.tool.name }}
+          key: ---cargo-binaries-${{ runner.os }}-${{ matrix.tool.name }}-${{ matrix.tool.version }}
 
       - name: Install binary
         if: steps.cache.outputs.cache-hit != 'true'
-        run: cargo install ${{ matrix.tool }} --version '=${{ matrix.version }}' ${{ matrix.extra }}
+        run: cargo install ${{ matrix.tool.name }} --version '=${{ matrix.tool.version }}' ${{ matrix.tool.extra }}
 
       - name: Save binary to cache
         if: steps.cache.outputs.cache-hit != 'true'
         uses: martijnhols/actions-cache/save@v3
         with:
           path: |
-            ~/.cargo/bin/${{ matrix.tool }}
-          key: ---cargo-binaries-${{ runner.os }}-${{ matrix.tool }}-${{ matrix.version }}
+            ~/.cargo/bin/${{ matrix.tool.name }}
+          key: ---cargo-binaries-${{ runner.os }}-${{ matrix.tool.name }}-${{ matrix.tool.version }}
 
   toolchain_msrv:
     name: Install MSRV toolchain
