@@ -143,19 +143,6 @@ jobs:
           key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-cargo-hack0.5.12
           required: true
 
-      # https://github.com/rust-lang/cargo/issues/8841
-      # https://github.com/tensorflow/tensorboard/pull/4480#issuecomment-745904483
-      # https://doc.rust-lang.org/cargo/guide/cargo-home.html
-      - name: Cache cargo files
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ github.job }}
-
       # workaround for https://github.com/rust-lang/rustup/issues/2925
       - run: echo "MSRV=$(cargo metadata --format-version=1 --no-deps | sd '.*"rust_version":"([.0-9]+?)".*' '$1')" >> $GITHUB_ENV
 
@@ -223,6 +210,20 @@ jobs:
 
       # -Z avoid-dev-deps doesn't work
       - run: cargo +$NIGHTLY hack generate-lockfile --remove-dev-deps -Z minimal-versions
+
+      # https://github.com/rust-lang/cargo/issues/8841
+      # https://github.com/tensorflow/tensorboard/pull/4480#issuecomment-745904483
+      # https://doc.rust-lang.org/cargo/guide/cargo-home.html
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo-minimal-versions-${{ hashFiles('Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-minimal-versions-
+
       - run: cargo +$MSRV check --workspace --all-features
 
   format:
@@ -337,16 +338,6 @@ jobs:
   #   steps:
   #     - uses: actions/checkout@v3
 
-  #     - name: Cache stable toolchain
-  #       uses: actions/cache@v3
-  #       with:
-  #         path: |
-  #           ~/.rustup/toolchains/stable-*
-  #           ~/.rustup/update-hashes/stable-*
-  #         key: ${{ runner.os }}-toolchain-stable
-
-  #     - run: rustup toolchain install stable --no-self-update --profile=minimal --component rustfmt,clippy
-
   #     - name: Cache cargo files
   #       uses: actions/cache@v3
   #       with:
@@ -357,4 +348,4 @@ jobs:
   #           target/
   #         key: ${{ runner.os }}-cargo-general
 
-  #     - run: cargo +stable test --doc --workspace --features mint,glam
+  #     - run: cargo test --doc --workspace --features mint,glam
