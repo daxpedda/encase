@@ -211,47 +211,47 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - run: |
-          echo "HOST=$(rustc -vV | sed -n 's|host: ||p')" >> $GITHUB_ENV
+      # - run: |
+      #     echo "HOST=$(rustc -vV | sed -n 's|host: ||p')" >> $GITHUB_ENV
 
-      - name: Restore toolchain from cache
-        id: cache
-        uses: martijnhols/actions-cache/restore@v3
-        with:
-          path: |
-            ~/.rustup/toolchains/stable-${{ env.HOST }}
-            ~/.rustup/update-hashes/stable-${{ env.HOST }}
-          key: toolchain-stable-${{ env.HOST }}
+      # - name: Restore toolchain from cache
+      #   id: cache
+      #   uses: martijnhols/actions-cache/restore@v3
+      #   with:
+      #     path: |
+      #       ~/.rustup/toolchains/stable-${{ env.HOST }}
+      #       ~/.rustup/update-hashes/stable-${{ env.HOST }}
+      #     key: toolchain-stable-${{ env.HOST }}
 
-      - run: |
-          echo "initial-toolchain-version<<EOF" >> $GITHUB_ENV
-          echo "" >> $GITHUB_ENV
-          echo "$(rustc +stable -vV)" >> $GITHUB_ENV
-          echo "components:" >> $GITHUB_ENV
-          echo "$(rustup component list --installed --toolchain stable)" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-        if: steps.cache.outputs.cache-hit == 'true'
+      # - run: |
+      #     echo "initial-toolchain-version<<EOF" >> $GITHUB_ENV
+      #     echo "" >> $GITHUB_ENV
+      #     echo "$(rustc +stable -vV)" >> $GITHUB_ENV
+      #     echo "components:" >> $GITHUB_ENV
+      #     echo "$(rustup component list --installed --toolchain stable)" >> $GITHUB_ENV
+      #     echo "EOF" >> $GITHUB_ENV
+      #   if: steps.cache.outputs.cache-hit == 'true'
 
-      - run: rustup toolchain install stable --no-self-update --profile=minimal --component rustfmt,clippy
+      # - run: rustup toolchain install stable --no-self-update --profile=minimal --component rustfmt,clippy
 
-      - run: |
-          echo "updated-toolchain-version<<EOF" >> $GITHUB_ENV
-          echo "" >> $GITHUB_ENV
-          echo "$(rustc +stable -vV)" >> $GITHUB_ENV
-          echo "components:" >> $GITHUB_ENV
-          echo "$(rustup component list --installed --toolchain stable)" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+      # - run: |
+      #     echo "updated-toolchain-version<<EOF" >> $GITHUB_ENV
+      #     echo "" >> $GITHUB_ENV
+      #     echo "$(rustc +stable -vV)" >> $GITHUB_ENV
+      #     echo "components:" >> $GITHUB_ENV
+      #     echo "$(rustup component list --installed --toolchain stable)" >> $GITHUB_ENV
+      #     echo "EOF" >> $GITHUB_ENV
 
-      - name: Save toolchain to cache
-        if: env.initial-toolchain-version != env.updated-toolchain-version
-        uses: martijnhols/actions-cache/save@v3
-        with:
-          path: |
-            ~/.rustup/toolchains/stable-${{ env.HOST }}
-            ~/.rustup/update-hashes/stable-${{ env.HOST }}
-          key: ${{ steps.cache.outputs.primary-key }}
+      # - name: Save toolchain to cache
+      #   if: env.initial-toolchain-version != env.updated-toolchain-version
+      #   uses: martijnhols/actions-cache/save@v3
+      #   with:
+      #     path: |
+      #       ~/.rustup/toolchains/stable-${{ env.HOST }}
+      #       ~/.rustup/update-hashes/stable-${{ env.HOST }}
+      #     key: ${{ steps.cache.outputs.primary-key }}
 
-      - run: cargo +stable fmt --check --all
+      - run: cargo fmt --check --all
 
   clippy:
     name: Check clippy
@@ -259,45 +259,45 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - run: |
-          echo "HOST=$(rustc -vV | sed -n 's|host: ||p')" >> $GITHUB_ENV
+      # - run: |
+      #     echo "HOST=$(rustc -vV | sed -n 's|host: ||p')" >> $GITHUB_ENV
 
-      - name: Restore toolchain from cache
-        id: cache
-        uses: martijnhols/actions-cache/restore@v3
-        with:
-          path: |
-            ~/.rustup/toolchains/stable-${{ env.HOST }}
-            ~/.rustup/update-hashes/stable-${{ env.HOST }}
-          key: toolchain-stable-${{ env.HOST }}
+      # - name: Restore toolchain from cache
+      #   id: cache
+      #   uses: martijnhols/actions-cache/restore@v3
+      #   with:
+      #     path: |
+      #       ~/.rustup/toolchains/stable-${{ env.HOST }}
+      #       ~/.rustup/update-hashes/stable-${{ env.HOST }}
+      #     key: toolchain-stable-${{ env.HOST }}
 
-      - run: |
-          echo "initial-toolchain-version<<EOF" >> $GITHUB_ENV
-          echo "" >> $GITHUB_ENV
-          echo "$(rustc +stable -vV)" >> $GITHUB_ENV
-          echo "components:" >> $GITHUB_ENV
-          echo "$(rustup component list --installed --toolchain stable)" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-        if: steps.cache.outputs.cache-hit == 'true'
+      # - run: |
+      #     echo "initial-toolchain-version<<EOF" >> $GITHUB_ENV
+      #     echo "" >> $GITHUB_ENV
+      #     echo "$(rustc +stable -vV)" >> $GITHUB_ENV
+      #     echo "components:" >> $GITHUB_ENV
+      #     echo "$(rustup component list --installed --toolchain stable)" >> $GITHUB_ENV
+      #     echo "EOF" >> $GITHUB_ENV
+      #   if: steps.cache.outputs.cache-hit == 'true'
 
-      - run: rustup toolchain install stable --no-self-update --profile=minimal --component rustfmt,clippy
+      # - run: rustup toolchain install stable --no-self-update --profile=minimal --component rustfmt,clippy
 
-      - run: |
-          echo "updated-toolchain-version<<EOF" >> $GITHUB_ENV
-          echo "" >> $GITHUB_ENV
-          echo "$(rustc +stable -vV)" >> $GITHUB_ENV
-          echo "components:" >> $GITHUB_ENV
-          echo "$(rustup component list --installed --toolchain stable)" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+      # - run: |
+      #     echo "updated-toolchain-version<<EOF" >> $GITHUB_ENV
+      #     echo "" >> $GITHUB_ENV
+      #     echo "$(rustc +stable -vV)" >> $GITHUB_ENV
+      #     echo "components:" >> $GITHUB_ENV
+      #     echo "$(rustup component list --installed --toolchain stable)" >> $GITHUB_ENV
+      #     echo "EOF" >> $GITHUB_ENV
 
-      - name: Save toolchain to cache
-        if: env.initial-toolchain-version != env.updated-toolchain-version
-        uses: martijnhols/actions-cache/save@v3
-        with:
-          path: |
-            ~/.rustup/toolchains/stable-${{ env.HOST }}
-            ~/.rustup/update-hashes/stable-${{ env.HOST }}
-          key: ${{ steps.cache.outputs.primary-key }}
+      # - name: Save toolchain to cache
+      #   if: env.initial-toolchain-version != env.updated-toolchain-version
+      #   uses: martijnhols/actions-cache/save@v3
+      #   with:
+      #     path: |
+      #       ~/.rustup/toolchains/stable-${{ env.HOST }}
+      #       ~/.rustup/update-hashes/stable-${{ env.HOST }}
+      #     key: ${{ steps.cache.outputs.primary-key }}
 
       - name: Cache cargo files
         uses: actions/cache@v3
@@ -309,7 +309,7 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-general
 
-      - run: cargo +stable clippy --all-targets --workspace --all-features -- -D warnings
+      - run: cargo clippy --all-targets --workspace --all-features -- -D warnings
 
   # doc_tests:
   #   name: Run doc tests
