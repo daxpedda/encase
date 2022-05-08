@@ -19,7 +19,10 @@ jobs:
         uses: martijnhols/actions-cache/check@v3
         with:
           path: |
-            ~/.cargo/bin/
+            ~/.cargo/bin/sd
+            ~/.cargo/bin/jql
+            ~/.cargo/bin/cargo-hack
+            ~/.cargo/bin/sccache
           key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-jql4.0.3-cargo-hack0.5.12-sccache0.3.0
 
       - name: Install binaries
@@ -35,7 +38,10 @@ jobs:
         uses: martijnhols/actions-cache/save@v3
         with:
           path: |
-            ~/.cargo/bin/
+            ~/.cargo/bin/sd
+            ~/.cargo/bin/jql
+            ~/.cargo/bin/cargo-hack
+            ~/.cargo/bin/sccache
           key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-jql4.0.3-cargo-hack0.5.12-sccache0.3.0
 
   toolchain_msrv:
@@ -49,7 +55,7 @@ jobs:
         uses: martijnhols/actions-cache/restore@v3
         with:
           path: |
-            ~/.cargo/bin/
+            ~/.cargo/bin/sd
           key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-jql4.0.3-cargo-hack0.5.12-sccache0.3.0
           required: true
 
@@ -95,7 +101,7 @@ jobs:
         uses: martijnhols/actions-cache/restore@v3
         with:
           path: |
-            ~/.cargo/bin/
+            ~/.cargo/bin/sd
           key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-jql4.0.3-cargo-hack0.5.12-sccache0.3.0
           required: true
 
@@ -141,7 +147,9 @@ jobs:
         uses: martijnhols/actions-cache/restore@v3
         with:
           path: |
-            ~/.cargo/bin/
+            ~/.cargo/bin/sd
+            ~/.cargo/bin/jql
+            ~/.cargo/bin/cargo-hack
           key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-jql4.0.3-cargo-hack0.5.12-sccache0.3.0
           required: true
 
