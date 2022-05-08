@@ -27,6 +27,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: ${{ env.TOOLCHAIN_KEY }}
+        continue-on-error: true
 
       - name: Restore toolchain from cache
         id: cache
