@@ -20,12 +20,13 @@ jobs:
         with:
           path: |
             ~/.cargo/bin/
-          key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-cargo-hack0.5.12
+          key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-jql4.0.3-cargo-hack0.5.12
 
       - name: Install binaries
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           cargo install sd --version '=0.7.6'
+          cargo install jql --version '=4.0.3'
           cargo install cargo-hack --version '=0.5.12'
 
       - name: Save binaries to cache
@@ -34,7 +35,7 @@ jobs:
         with:
           path: |
             ~/.cargo/bin/
-          key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-cargo-hack0.5.12
+          key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-jql4.0.3-cargo-hack0.5.12
 
   toolchain_msrv:
     name: Install MSRV toolchain
@@ -48,7 +49,7 @@ jobs:
         with:
           path: |
             ~/.cargo/bin/
-          key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-cargo-hack0.5.12
+          key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-jql4.0.3-cargo-hack0.5.12
           required: true
 
       # workaround for https://github.com/rust-lang/rustup/issues/2925
@@ -94,7 +95,7 @@ jobs:
         with:
           path: |
             ~/.cargo/bin/
-          key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-cargo-hack0.5.12
+          key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-jql4.0.3-cargo-hack0.5.12
           required: true
 
       # workaround for https://github.com/rust-lang/rustup/issues/2925
@@ -140,7 +141,7 @@ jobs:
         with:
           path: |
             ~/.cargo/bin/
-          key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-cargo-hack0.5.12
+          key: ---cargo-binaries-${{ runner.os }}-sd0.7.6-jql4.0.3-cargo-hack0.5.12
           required: true
 
       # workaround for https://github.com/rust-lang/rustup/issues/2925
@@ -208,8 +209,8 @@ jobs:
       #       ~/.rustup/update-hashes/${{ env.NIGHTLY }}-${{ env.HOST }}
       #     key: ${{ steps.cache-nightly.outputs.primary-key }}
 
-      # -Z avoid-dev-deps doesn't work
-      - run: cargo +$NIGHTLY hack generate-lockfile --remove-dev-deps -Z minimal-versions
+      - run: |
+          cargo metadata --format-version=1 --no-deps | jql '.."packages"|"dependencies"' | jql '[]|={"kind":"null"}' > dependencies.json
 
       # https://github.com/rust-lang/cargo/issues/8841
       # https://github.com/tensorflow/tensorboard/pull/4480#issuecomment-745904483
@@ -221,9 +222,11 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-          key: ${{ runner.os }}-cargo-minimal-versions-${{ hashFiles('Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-minimal-versions-${{ hashFiles('dependencies.json') }}
           restore-keys: ${{ runner.os }}-cargo-minimal-versions-
 
+      # -Z avoid-dev-deps doesn't work
+      - run: cargo +$NIGHTLY hack generate-lockfile --remove-dev-deps -Z minimal-versions
       - run: cargo +$MSRV check --workspace --all-features
 
   format:
