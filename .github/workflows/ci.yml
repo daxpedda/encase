@@ -43,7 +43,7 @@ jobs:
       - name: Restore toolchain key artifact
         uses: actions/download-artifact@v3
         with:
-          name: ${{ env.TOOLCHAIN_KEY }}
+          name: artifact-${{ env.TOOLCHAIN_KEY }}
         continue-on-error: true
 
       - name: Restore toolchain from cache
@@ -94,7 +94,7 @@ jobs:
         if: env.initial_toolchain_version != env.updated_toolchain_version
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ env.TOOLCHAIN_KEY }}
+          name: artifact-${{ env.TOOLCHAIN_KEY }}
           path: ${{ env.TOOLCHAIN_KEY }}
 
   # toolchain_nightly:
@@ -126,7 +126,7 @@ jobs:
   #     - name: Restore toolchain key artifact
   #       uses: actions/download-artifact@v3
   #       with:
-  #         name: ${{ env.TOOLCHAIN_KEY }}
+  #         name: artifact-${{ env.TOOLCHAIN_KEY }}
   #       continue-on-error: true
 
   #     - name: Restore toolchain from cache
@@ -177,7 +177,7 @@ jobs:
   #       if: env.initial_toolchain_version != env.updated_toolchain_version
   #       uses: actions/upload-artifact@v3
   #       with:
-  #         name: ${{ env.TOOLCHAIN_KEY }}
+  #         name: artifact-${{ env.TOOLCHAIN_KEY }}
   #         path: ${{ env.TOOLCHAIN_KEY }}
 
   msrv_and_minimal_versions:
@@ -217,7 +217,7 @@ jobs:
       - name: Restore MSRV toolchain key artifact
         uses: actions/download-artifact@v3
         with:
-          name: ${{ env.MSRV_KEY }}
+          name: artifact-${{ env.MSRV_KEY }}
 
       - name: Restore MSRV toolchain from cache
         uses: martijnhols/actions-cache/restore@v3
