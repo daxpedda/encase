@@ -65,7 +65,7 @@ jobs:
       # workaround for https://github.com/rust-lang/rustup/issues/2925
       - name: Set environment variables
         run: |
-          echo "MSRV=$(cargo metadata --format-version=1 --no-deps | sd '.*"rust_version":"([.0-9]+?)".*' '$1')" >> $GITHUB_ENV
+          echo "MSRV=$(cargo metadata --format-version=1 --no-deps --offline | sd '.*"rust_version":"([.0-9]+?)".*' '$1')" >> $GITHUB_ENV
           echo "HOST=$(rustc -vV | sd '(?s:.*host: (.+?)\n.*)' '$1')" >> $GITHUB_ENV
 
       - run: echo "TOOLCHAIN_NAME=$MSRV" >> $GITHUB_ENV
@@ -184,7 +184,7 @@ jobs:
           required: true
 
       # workaround for https://github.com/rust-lang/rustup/issues/2925
-      - run: echo "MSRV=$(cargo metadata --format-version=1 --no-deps | sd '.*"rust_version":"([.0-9]+?)".*' '$1')" >> $GITHUB_ENV
+      - run: echo "MSRV=$(cargo metadata --format-version=1 --no-deps --offline | sd '.*"rust_version":"([.0-9]+?)".*' '$1')" >> $GITHUB_ENV
 
       - run: |
           echo "HOST=$(rustc -vV | sed -n 's|host: ||p')" >> $GITHUB_ENV
@@ -249,12 +249,13 @@ jobs:
       #     key: ${{ steps.cache-nightly.outputs.primary-key }}
 
       - run: |
-          cargo metadata --format-version=1 --no-deps | jql '.."packages"|"dependencies"' | jql '[]|={"kind":"null"}' > dependencies.json
+          cargo metadata --format-version=1 --no-deps --offline | jql '.."packages"|"dependencies"' | jql '[]|={"kind":"null"}' > dependencies.json
 
       # https://github.com/rust-lang/cargo/issues/8841
       # https://github.com/tensorflow/tensorboard/pull/4480#issuecomment-745904483
       # https://doc.rust-lang.org/cargo/guide/cargo-home.html
       - name: Cache dependencies
+        id: cache
         uses: actions/cache@v3
         with:
           path: |
@@ -272,9 +273,13 @@ jobs:
           key: ${{ runner.os }}-sccache-minimal-versions-${{ hashFiles('dependencies.json') }}
           restore-keys: ${{ runner.os }}-sccache-minimal-versions-
 
+      - if: steps.cache.outputs.cache-hit
+        run: |
+          echo "OFFLINE=--offline" >> $GITHUB_ENV
+
       # -Z avoid-dev-deps doesn't work
-      - run: cargo +$NIGHTLY hack generate-lockfile --remove-dev-deps -Z minimal-versions
-      - run: cargo +$MSRV check --workspace --all-features
+      - run: cargo +$NIGHTLY hack generate-lockfile --remove-dev-deps -Z minimal-versions $OFFLINE
+      - run: cargo +$MSRV check --workspace --all-features $OFFLINE
 
       - run: sccache --show-stats
 
