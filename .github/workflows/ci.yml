@@ -63,7 +63,7 @@ jobs:
           echo "components:" >> $GITHUB_ENV
           echo "$(rustup component list --installed --toolchain $TOOLCHAIN_NAME)" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-        if: steps.cache.outputs.cache-hit == 'true'
+        if: steps.cache.outputs.cache-hit
 
       - name: Install or update toolchain
         run: rustup toolchain install $TOOLCHAIN_NAME --no-self-update --profile=minimal
@@ -96,6 +96,89 @@ jobs:
         with:
           name: ${{ env.TOOLCHAIN_KEY }}
           path: ${{ env.TOOLCHAIN_KEY }}
+
+  # toolchain_nightly:
+  #   name: Install or update nightly toolchain
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     # FIX: this will be stuck on sd v0.7
+  #     - name: Cache cargo files
+  #       uses: actions/cache@v3
+  #       with:
+  #         path: |
+  #           ~/.cargo/.crates.toml
+  #           ~/.cargo/bin/
+  #           ~/.cargo/registry/index/
+  #           ~/.cargo/registry/cache/
+  #           ~/.cargo/git/db/
+  #         key: ${{ runner.os }}-cargo-toolchain_msrv-sd^0.7
+
+  #     - run: cargo install sd --version ^0.7
+
+  #     - name: Set environment variables
+  #       run: |
+  #         echo "HOST=$(rustc -vV | sd '(?s:.*host: (.+?)\n.*)' '$1')" >> $GITHUB_ENV
+
+  #     - run: echo "TOOLCHAIN_NAME=$MSRV" >> $GITHUB_ENV
+  #     - run: echo "TOOLCHAIN_FULL_NAME=$TOOLCHAIN_NAME-$HOST" >> $GITHUB_ENV
+  #     - run: echo "TOOLCHAIN_KEY=toolchain-$TOOLCHAIN_FULL_NAME" >> $GITHUB_ENV
+
+  #     - name: Restore toolchain key artifact
+  #       uses: actions/download-artifact@v3
+  #       with:
+  #         name: ${{ env.TOOLCHAIN_KEY }}
+  #       continue-on-error: true
+
+  #     - name: Restore toolchain from cache
+  #       id: cache
+  #       uses: martijnhols/actions-cache/restore@v3
+  #       with:
+  #         path: |
+  #           ~/.rustup/toolchains/${{ env.TOOLCHAIN_FULL_NAME }}
+  #           ~/.rustup/update-hashes/${{ env.TOOLCHAIN_FULL_NAME }}
+  #         key: ${{ env.TOOLCHAIN_KEY }}-${{ hashFiles(env.TOOLCHAIN_KEY) }}
+
+  #     - name: Set initial toolchain version to environment variable
+  #       run: |
+  #         echo "initial_toolchain_version<<EOF" >> $GITHUB_ENV
+  #         echo "" >> $GITHUB_ENV
+  #         echo "$(rustc +$TOOLCHAIN_NAME -vV)" >> $GITHUB_ENV
+  #         echo "components:" >> $GITHUB_ENV
+  #         echo "$(rustup component list --installed --toolchain $TOOLCHAIN_NAME)" >> $GITHUB_ENV
+  #         echo "EOF" >> $GITHUB_ENV
+  #       if: steps.cache.outputs.cache-hit == 'true'
+
+  #     - name: Install or update toolchain
+  #       run: rustup toolchain install $TOOLCHAIN_NAME --no-self-update --profile=minimal
+
+  #     - name: Set updated toolchain version to environment variable
+  #       run: |
+  #         echo "updated_toolchain_version<<EOF" >> $GITHUB_ENV
+  #         echo "" >> $GITHUB_ENV
+  #         echo "$(rustc +$TOOLCHAIN_NAME -vV)" >> $GITHUB_ENV
+  #         echo "components:" >> $GITHUB_ENV
+  #         echo "$(rustup component list --installed --toolchain $TOOLCHAIN_NAME)" >> $GITHUB_ENV
+  #         echo "EOF" >> $GITHUB_ENV
+
+  #     - name: Save toolchain version to key file
+  #       run: echo $updated_toolchain_version > $TOOLCHAIN_KEY
+  #       if: env.initial_toolchain_version != env.updated_toolchain_version
+
+  #     - name: Save toolchain to cache
+  #       if: env.initial_toolchain_version != env.updated_toolchain_version
+  #       uses: martijnhols/actions-cache/save@v3
+  #       with:
+  #         path: |
+  #           ~/.rustup/toolchains/${{ env.TOOLCHAIN_FULL_NAME }}
+  #           ~/.rustup/update-hashes/${{ env.TOOLCHAIN_FULL_NAME }}
+  #         key: ${{ env.TOOLCHAIN_KEY }}-${{ hashFiles(env.TOOLCHAIN_KEY) }}
+
+  #     - name: Save toolchain key artifact
+  #       if: env.initial_toolchain_version != env.updated_toolchain_version
+  #       uses: actions/upload-artifact@v3
+  #       with:
+  #         name: ${{ env.TOOLCHAIN_KEY }}
+  #         path: ${{ env.TOOLCHAIN_KEY }}
 
   msrv_and_minimal_versions:
     name: Check MSRV and minimal-versions
