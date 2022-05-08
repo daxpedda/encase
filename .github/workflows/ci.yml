@@ -143,6 +143,11 @@ jobs:
     name: Check MSRV and minimal-versions
     runs-on: ubuntu-latest
     needs: [install_binaries, toolchain_msrv, toolchain_nightly]
+    env:
+      RUSTC_WRAPPER: sccache
+      CARGO_INCREMENTAL: false
+      SCCACHE_CACHE_SIZE: 2G
+      # SCCACHE_RECACHE: 1 # Uncomment this to clear cache, then comment it back out
     steps:
       - uses: actions/checkout@v3
 
@@ -168,6 +173,14 @@ jobs:
           path: |
             ~/.cargo/bin/cargo-hack
           key: ---cargo-binaries-${{ runner.os }}-cargo-hack-0.5.12
+          required: true
+
+      - name: Restore sccache bin from cache
+        uses: martijnhols/actions-cache/restore@v3
+        with:
+          path: |
+            ~/.cargo/bin/sccache
+          key: ---cargo-binaries-${{ runner.os }}-sccache-0.3.0
           required: true
 
       # workaround for https://github.com/rust-lang/rustup/issues/2925
@@ -251,9 +264,19 @@ jobs:
           key: ${{ runner.os }}-cargo-minimal-versions-${{ hashFiles('dependencies.json') }}
           restore-keys: ${{ runner.os }}-cargo-minimal-versions-
 
+      - name: Cache sccache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/sccache
+          key: ${{ runner.os }}-sccache-minimal-versions-${{ hashFiles('dependencies.json') }}
+          restore-keys: ${{ runner.os }}-sccache-minimal-versions-
+
       # -Z avoid-dev-deps doesn't work
       - run: cargo +$NIGHTLY hack generate-lockfile --remove-dev-deps -Z minimal-versions
       - run: cargo +$MSRV check --workspace --all-features
+
+      - run: sccache --show-stats
 
   format:
     name: Check format
