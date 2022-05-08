@@ -62,10 +62,59 @@ jobs:
             ~/.rustup/update-hashes/${{ env.TOOLCHAIN_FULL_NAME }}
           key: ---${{ env.TOOLCHAIN_KEY }}
 
+  toolchain_nightly:
+    name: Install nightly toolchain
+    runs-on: ubuntu-latest
+    steps:
+      # FIX: this will be stuck on sd v0.7
+      - name: Cache cargo files
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/.crates.toml
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo-toolchain_msrv-sd^0.7
+
+      - run: cargo install sd --version ^0.7
+
+      # workaround for https://github.com/rust-lang/rustup/issues/2925
+      - name: Set environment variables
+        run: |
+          echo "HOST=$(rustc -vV | sd '(?s:.*host: (.+?)\n.*)' '$1')" >> $GITHUB_ENV
+
+      - run: echo "TOOLCHAIN_NAME=$NIGHTLY" >> $GITHUB_ENV
+      - run: echo "TOOLCHAIN_FULL_NAME=$TOOLCHAIN_NAME-$HOST" >> $GITHUB_ENV
+      - run: echo "TOOLCHAIN_KEY=toolchain-$TOOLCHAIN_FULL_NAME" >> $GITHUB_ENV
+
+      - name: Check if toolchain is already cached
+        id: cache
+        uses: martijnhols/actions-cache/check@v3
+        with:
+          path: |
+            ~/.rustup/toolchains/${{ env.TOOLCHAIN_FULL_NAME }}
+            ~/.rustup/update-hashes/${{ env.TOOLCHAIN_FULL_NAME }}
+          key: ---${{ env.TOOLCHAIN_KEY }}
+
+      - name: Install toolchain
+        run: rustup toolchain install $TOOLCHAIN_NAME --no-self-update --profile=minimal
+        if: steps.cache.outputs.cache-hit != 'true'
+
+      - name: Save toolchain to cache
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: martijnhols/actions-cache/save@v3
+        with:
+          path: |
+            ~/.rustup/toolchains/${{ env.TOOLCHAIN_FULL_NAME }}
+            ~/.rustup/update-hashes/${{ env.TOOLCHAIN_FULL_NAME }}
+          key: ---${{ env.TOOLCHAIN_KEY }}
+
   msrv_and_minimal_versions:
     name: Check MSRV and minimal-versions
     runs-on: ubuntu-latest
-    needs: toolchain_msrv
+    needs: [toolchain_msrv, toolchain_nightly]
     steps:
       - uses: actions/checkout@v3
 
@@ -95,6 +144,7 @@ jobs:
 
       - run: |
           echo "MSRV_KEY=toolchain-$MSRV-$HOST" >> $GITHUB_ENV
+          echo "NIGHTLY_KEY=toolchain-$NIGHTLY-$HOST" >> $GITHUB_ENV
 
       - name: Restore MSRV toolchain from cache
         uses: martijnhols/actions-cache/restore@v3
@@ -106,41 +156,50 @@ jobs:
           required: true
 
       - name: Restore nightly toolchain from cache
-        id: cache-nightly
         uses: martijnhols/actions-cache/restore@v3
         with:
           path: |
             ~/.rustup/toolchains/${{ env.NIGHTLY }}-${{ env.HOST }}
             ~/.rustup/update-hashes/${{ env.NIGHTLY }}-${{ env.HOST }}
-          key: toolchain-${{ env.NIGHTLY }}-${{ env.HOST }}
+          key: ---${{ env.NIGHTLY_KEY }}
+          required: true
 
-      - run: |
-          echo "initial-toolchain-nightly-version<<EOF" >> $GITHUB_ENV
-          echo "" >> $GITHUB_ENV
-          echo "$(rustc +$NIGHTLY -vV)" >> $GITHUB_ENV
-          echo "components:" >> $GITHUB_ENV
-          echo "$(rustup component list --installed --toolchain $NIGHTLY)" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-        if: steps.cache-nightly.outputs.cache-hit == 'true'
+      # - name: Restore nightly toolchain from cache
+      #   id: cache-nightly
+      #   uses: martijnhols/actions-cache/restore@v3
+      #   with:
+      #     path: |
+      #       ~/.rustup/toolchains/${{ env.NIGHTLY }}-${{ env.HOST }}
+      #       ~/.rustup/update-hashes/${{ env.NIGHTLY }}-${{ env.HOST }}
+      #     key: toolchain-${{ env.NIGHTLY }}-${{ env.HOST }}
 
-      - run: rustup toolchain install $NIGHTLY --no-self-update --profile=minimal
+      # - run: |
+      #     echo "initial-toolchain-nightly-version<<EOF" >> $GITHUB_ENV
+      #     echo "" >> $GITHUB_ENV
+      #     echo "$(rustc +$NIGHTLY -vV)" >> $GITHUB_ENV
+      #     echo "components:" >> $GITHUB_ENV
+      #     echo "$(rustup component list --installed --toolchain $NIGHTLY)" >> $GITHUB_ENV
+      #     echo "EOF" >> $GITHUB_ENV
+      #   if: steps.cache-nightly.outputs.cache-hit == 'true'
 
-      - run: |
-          echo "updated-toolchain-nightly-version<<EOF" >> $GITHUB_ENV
-          echo "" >> $GITHUB_ENV
-          echo "$(rustc +$NIGHTLY -vV)" >> $GITHUB_ENV
-          echo "components:" >> $GITHUB_ENV
-          echo "$(rustup component list --installed --toolchain $NIGHTLY)" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+      # - run: rustup toolchain install $NIGHTLY --no-self-update --profile=minimal
 
-      - name: Save nightly toolchain to cache
-        if: env.initial-toolchain-nightly-version != env.updated-toolchain-nightly-version
-        uses: martijnhols/actions-cache/save@v3
-        with:
-          path: |
-            ~/.rustup/toolchains/${{ env.NIGHTLY }}-${{ env.HOST }}
-            ~/.rustup/update-hashes/${{ env.NIGHTLY }}-${{ env.HOST }}
-          key: ${{ steps.cache-nightly.outputs.primary-key }}
+      # - run: |
+      #     echo "updated-toolchain-nightly-version<<EOF" >> $GITHUB_ENV
+      #     echo "" >> $GITHUB_ENV
+      #     echo "$(rustc +$NIGHTLY -vV)" >> $GITHUB_ENV
+      #     echo "components:" >> $GITHUB_ENV
+      #     echo "$(rustup component list --installed --toolchain $NIGHTLY)" >> $GITHUB_ENV
+      #     echo "EOF" >> $GITHUB_ENV
+
+      # - name: Save nightly toolchain to cache
+      #   if: env.initial-toolchain-nightly-version != env.updated-toolchain-nightly-version
+      #   uses: martijnhols/actions-cache/save@v3
+      #   with:
+      #     path: |
+      #       ~/.rustup/toolchains/${{ env.NIGHTLY }}-${{ env.HOST }}
+      #       ~/.rustup/update-hashes/${{ env.NIGHTLY }}-${{ env.HOST }}
+      #     key: ${{ steps.cache-nightly.outputs.primary-key }}
 
       # -Z avoid-dev-deps doesn't work
       - run: cargo +$NIGHTLY hack generate-lockfile --remove-dev-deps -Z minimal-versions
