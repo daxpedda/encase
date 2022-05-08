@@ -16,11 +16,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - run: cargo install sd --version ^0.7
+
       # workaround for https://github.com/rust-lang/rustup/issues/2925
       - name: Set environment variables
         run: |
-          echo "MSRV=$(cargo metadata --format-version=1 --no-deps | jql '"packages"|={"name":"encase"}|"rust_version"' | jql -r '[0]')" >> $GITHUB_ENV
-          echo "HOST=$(rustc -vV | sed -n 's|host: ||p')" >> $GITHUB_ENV
+          echo "MSRV=$(cargo metadata --format-version=1 --no-deps | sd '.*"rust_version":"([.0-9]+?)".*' '$1')" >> $GITHUB_ENV
+          echo "HOST=$(rustc -vV | sd '(?s:.*host: (.+?)\n.*)' '$1')" >> $GITHUB_ENV
 
       - run: echo "TOOLCHAIN_NAME=$MSRV" >> $GITHUB_ENV
       - run: echo "TOOLCHAIN_FULL_NAME=$TOOLCHAIN_NAME-$HOST" >> $GITHUB_ENV
