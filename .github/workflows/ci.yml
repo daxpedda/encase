@@ -19,9 +19,10 @@ jobs:
         run: |
           echo "MSRV=$(cargo metadata --format-version=1 --no-deps | jql '"packages"|={"name":"encase"}|"rust_version"' | jql -r '[0]')" >> $GITHUB_ENV
           echo "HOST=$(rustc -vV | sed -n 's|host: ||p')" >> $GITHUB_ENV
-          echo "TOOLCHAIN_NAME=$MSRV" >> $GITHUB_ENV
-          echo "TOOLCHAIN_FULL_NAME=$TOOLCHAIN_NAME-$HOST" >> $GITHUB_ENV
-          echo "TOOLCHAIN_KEY=toolchain-$TOOLCHAIN_FULL_NAME" >> $GITHUB_ENV
+
+      - run: echo "TOOLCHAIN_NAME=$MSRV" >> $GITHUB_ENV
+      - run: echo "TOOLCHAIN_FULL_NAME=$TOOLCHAIN_NAME-$HOST" >> $GITHUB_ENV
+      - run: echo "TOOLCHAIN_KEY=toolchain-$TOOLCHAIN_FULL_NAME" >> $GITHUB_ENV
 
       - name: Restore toolchain key artifact
         uses: actions/download-artifact@v3
