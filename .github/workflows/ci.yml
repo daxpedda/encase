@@ -419,17 +419,35 @@ jobs:
       #     restore-keys: |
       #       ${{ runner.os }}-sccache-${{ hashFiles('TOOLCHAIN_VERSION') }}
 
-      - name: Cache cargo files
-        uses: actions/cache@v3
+      - name: Restore cargo registry index from cache
+        uses: martijnhols/actions-cache/restore@v3
         with:
           path: |
             ~/.cargo/registry/index/
+          key: cargo-registry-index-
+          restore-keys: cargo-registry-index-
+          required: true
+
+      - run: cargo generate-lockfile --offline
+
+      - name: Cache dependencies
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: |
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-general
+            ~/.cache/sccache/
+          key: ${{ runner.os }}-cargo-dependencies-${{ hashFiles('Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-dependencies-
 
-      - run: cargo clippy --all-targets --workspace --all-features -- -D warnings
+      - if: steps.cache.outputs.cache-hit
+        run: |
+          echo "OFFLINE=--offline" >> $GITHUB_ENV
+
+      - run: cargo clippy --all-targets --workspace --all-features $OFFLINE -- -D warnings
+
+      - run: sccache --show-stats
 
   # doc_tests:
   #   name: Run doc tests
