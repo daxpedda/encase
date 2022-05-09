@@ -28,7 +28,7 @@ jobs:
 
       # https://github.com/rust-lang/cargo/issues/10319#issuecomment-1019428982
       - if: steps.cache.outputs.cache-hit != 'true'
-        run: cargo install empty-library
+        run: cargo install --bins empty-library
 
       - name: Cache registry index
         if: steps.cache.outputs.cache-hit != 'true'
@@ -350,10 +350,7 @@ jobs:
       #       ~/.rustup/update-hashes/stable-${{ env.HOST }}
       #     key: toolchain-stable-${{ env.HOST }}
 
-      - run: |
-          rustc -vV > TOOLCHAIN_VERSION
-      - run: |
-          cargo metadata --format-version=1 --no-deps --offline | jql '.."packages"|"dependencies"' | jql '[]|={"kind":"null"}' > dependencies.json
+
       # echo "TOOLCHAIN_VERSION<<EOF" >> $GITHUB_ENV
       # echo "" >> $GITHUB_ENV
       # echo "$(rustc +stable -vV)" >> $GITHUB_ENV
@@ -380,6 +377,11 @@ jobs:
       #       ~/.rustup/toolchains/stable-${{ env.HOST }}
       #       ~/.rustup/update-hashes/stable-${{ env.HOST }}
       #     key: ${{ steps.cache.outputs.primary-key }}
+
+      # - run: |
+      #     rustc -vV > TOOLCHAIN_VERSION
+      # - run: |
+      #     cargo metadata --format-version=1 --no-deps --offline | jql '.."packages"|"dependencies"' | jql '[]|={"kind":"null"}' > dependencies.json
 
       # get or update index
 
