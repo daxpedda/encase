@@ -10,6 +10,34 @@ env:
 # overwrite cache not possible https://github.com/actions/toolkit/issues/658#issuecomment-1019398065
 
 jobs:
+  update_cargo_index:
+    name: Update cargo index
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "INDEX_HASH=$(git ls-remote https://github.com/rust-lang/crates.io-index.git HEAD)" >> $GITHUB_ENV
+
+      - name: Check if index is already cached
+        id: cache
+        uses: martijnhols/actions-cache/restore@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+          key: cargo-registry-index-${{ env.INDEX_HASH }}
+          restore-keys: cargo-registry-index-
+
+      # https://github.com/rust-lang/cargo/issues/10319#issuecomment-1019428982
+      - if: steps.cache.outputs.cache-hit != 'true'
+        run: cargo install empty-library
+
+      - name: Cache registry index
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: martijnhols/actions-cache/save@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+          key: cargo-registry-index-${{ env.INDEX_HASH }}
+
   install_binaries:
     name: Install ${{ matrix.tool.name }} binary
     runs-on: ubuntu-latest
@@ -288,54 +316,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
-      # - run: |
-      #     echo "HOST=$(rustc -vV | sed -n 's|host: ||p')" >> $GITHUB_ENV
-
-      # - name: Restore toolchain from cache
-      #   id: cache
-      #   uses: martijnhols/actions-cache/restore@v3
-      #   with:
-      #     path: |
-      #       ~/.rustup/toolchains/stable-${{ env.HOST }}
-      #       ~/.rustup/update-hashes/stable-${{ env.HOST }}
-      #     key: toolchain-stable-${{ env.HOST }}
-
-      # - run: |
-      #     echo "initial-toolchain-version<<EOF" >> $GITHUB_ENV
-      #     echo "" >> $GITHUB_ENV
-      #     echo "$(rustc +stable -vV)" >> $GITHUB_ENV
-      #     echo "components:" >> $GITHUB_ENV
-      #     echo "$(rustup component list --installed --toolchain stable)" >> $GITHUB_ENV
-      #     echo "EOF" >> $GITHUB_ENV
-      #   if: steps.cache.outputs.cache-hit == 'true'
-
-      # - run: rustup toolchain install stable --no-self-update --profile=minimal --component rustfmt,clippy
-
-      # - run: |
-      #     echo "updated-toolchain-version<<EOF" >> $GITHUB_ENV
-      #     echo "" >> $GITHUB_ENV
-      #     echo "$(rustc +stable -vV)" >> $GITHUB_ENV
-      #     echo "components:" >> $GITHUB_ENV
-      #     echo "$(rustup component list --installed --toolchain stable)" >> $GITHUB_ENV
-      #     echo "EOF" >> $GITHUB_ENV
-
-      # - name: Save toolchain to cache
-      #   if: env.initial-toolchain-version != env.updated-toolchain-version
-      #   uses: martijnhols/actions-cache/save@v3
-      #   with:
-      #     path: |
-      #       ~/.rustup/toolchains/stable-${{ env.HOST }}
-      #       ~/.rustup/update-hashes/stable-${{ env.HOST }}
-      #     key: ${{ steps.cache.outputs.primary-key }}
-
       - run: cargo fmt --check --all
 
   clippy:
     name: Check clippy
     runs-on: ubuntu-latest
+    needs: [install_binaries]
+    env:
+      RUSTC_WRAPPER: sccache
+      CARGO_INCREMENTAL: false
+      SCCACHE_CACHE_SIZE: 2G
+      # SCCACHE_RECACHE: 1 # Uncomment this to clear cache, then comment it back out
     steps:
       - uses: actions/checkout@v3
+
+      - name: Restore sccache bin from cache
+        uses: martijnhols/actions-cache/restore@v3
+        with:
+          path: |
+            ~/.cargo/bin/sccache
+          key: ---cargo-binaries-${{ runner.os }}-sccache-0.3.0
+          required: true
 
       # - run: |
       #     echo "HOST=$(rustc -vV | sed -n 's|host: ||p')" >> $GITHUB_ENV
@@ -349,13 +350,16 @@ jobs:
       #       ~/.rustup/update-hashes/stable-${{ env.HOST }}
       #     key: toolchain-stable-${{ env.HOST }}
 
-      # - run: |
-      #     echo "initial-toolchain-version<<EOF" >> $GITHUB_ENV
-      #     echo "" >> $GITHUB_ENV
-      #     echo "$(rustc +stable -vV)" >> $GITHUB_ENV
-      #     echo "components:" >> $GITHUB_ENV
-      #     echo "$(rustup component list --installed --toolchain stable)" >> $GITHUB_ENV
-      #     echo "EOF" >> $GITHUB_ENV
+      - run: |
+          rustc -vV > TOOLCHAIN_VERSION
+      - run: |
+          cargo metadata --format-version=1 --no-deps --offline | jql '.."packages"|"dependencies"' | jql '[]|={"kind":"null"}' > dependencies.json
+      # echo "TOOLCHAIN_VERSION<<EOF" >> $GITHUB_ENV
+      # echo "" >> $GITHUB_ENV
+      # echo "$(rustc +stable -vV)" >> $GITHUB_ENV
+      # echo "components:" >> $GITHUB_ENV
+      # echo "$(rustup component list --installed --toolchain stable)" >> $GITHUB_ENV
+      # echo "EOF" >> $GITHUB_ENV
       #   if: steps.cache.outputs.cache-hit == 'true'
 
       # - run: rustup toolchain install stable --no-self-update --profile=minimal --component rustfmt,clippy
@@ -376,6 +380,32 @@ jobs:
       #       ~/.rustup/toolchains/stable-${{ env.HOST }}
       #       ~/.rustup/update-hashes/stable-${{ env.HOST }}
       #     key: ${{ steps.cache.outputs.primary-key }}
+
+      # get or update index
+
+      # generate lock file
+
+      # hash lock file for
+
+      # - name: Cache dependencies
+      #   id: cache
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: |
+      #       ~/.cargo/registry/index/
+      #       ~/.cargo/registry/cache/
+      #       ~/.cargo/git/db/
+      #     key: ${{ runner.os }}-cargo-minimal-versions-${{ hashFiles('dependencies.json') }}
+      #     restore-keys: ${{ runner.os }}-cargo-minimal-versions-
+
+      # - name: Cache sccache
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: |
+      #       ~/.cache/sccache
+      #     key: ${{ runner.os }}-sccache-${{ hashFiles('TOOLCHAIN_VERSION') }}-${{ hashFiles('dependencies.json') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-sccache-${{ hashFiles('TOOLCHAIN_VERSION') }}
 
       - name: Cache cargo files
         uses: actions/cache@v3
