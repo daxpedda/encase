@@ -428,7 +428,7 @@ jobs:
           restore-keys: cargo-registry-index-
           required: true
 
-      # --offline
+      # -Z no-index-update
       - run: cargo generate-lockfile
 
       - name: Cache dependencies
@@ -450,20 +450,54 @@ jobs:
 
       - run: sccache --show-stats
 
-  # doc_tests:
-  #   name: Run doc tests
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v3
+  doc_tests:
+    name: Run doc tests
+    runs-on: ubuntu-latest
+    needs: [install_binaries, update_cargo_index]
+    env:
+      RUSTC_WRAPPER: sccache
+      CARGO_INCREMENTAL: false
+      SCCACHE_CACHE_SIZE: 2G
+      # SCCACHE_RECACHE: 1 # Uncomment this to clear cache, then comment it back out
+    steps:
+      - uses: actions/checkout@v3
 
-  #     - name: Cache cargo files
-  #       uses: actions/cache@v3
-  #       with:
-  #         path: |
-  #           ~/.cargo/registry/index/
-  #           ~/.cargo/registry/cache/
-  #           ~/.cargo/git/db/
-  #           target/
-  #         key: ${{ runner.os }}-cargo-general
+      - name: Restore sccache bin from cache
+        uses: martijnhols/actions-cache/restore@v3
+        with:
+          path: |
+            ~/.cargo/bin/sccache
+          key: ---cargo-binaries-${{ runner.os }}-sccache-0.3.0
+          required: true
 
-  #     - run: cargo test --doc --workspace --features mint,glam
+      - name: Restore cargo registry index from cache
+        uses: martijnhols/actions-cache/restore@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+          key: cargo-registry-index-
+          restore-keys: cargo-registry-index-
+          required: true
+
+      # -Z no-index-update
+      - run: cargo generate-lockfile
+
+      - name: Cache dependencies
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            ~/.cache/sccache/
+          key: ${{ runner.os }}-cargo-dependencies-${{ hashFiles('Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-dependencies-
+
+      - if: steps.cache.outputs.cache-hit
+        run: |
+          echo "OFFLINE=--offline" >> $GITHUB_ENV
+
+      - run: cargo test --doc --workspace --features mint,glam $OFFLINE
+
+      - run: sccache --show-stats
+
