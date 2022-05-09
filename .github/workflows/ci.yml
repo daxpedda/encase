@@ -28,8 +28,7 @@ jobs:
 
       # https://github.com/rust-lang/cargo/issues/10319#issuecomment-1019428982
       - if: steps.cache.outputs.cache-hit != 'true'
-        run: cargo install empty-library
-        continue-on-error: true
+        run: cargo install empty-library || true
 
       - name: Cache registry index
         if: steps.cache.outputs.cache-hit != 'true'
