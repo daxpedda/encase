@@ -428,7 +428,8 @@ jobs:
           restore-keys: cargo-registry-index-
           required: true
 
-      - run: cargo generate-lockfile --offline
+      # --offline
+      - run: cargo generate-lockfile
 
       - name: Cache dependencies
         id: cache
