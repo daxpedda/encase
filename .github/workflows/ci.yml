@@ -1,3 +1,21 @@
+# MSRV and minimal-versions check
+# cargo msrv verify -- cargo minimal-versions check --workspace --all-features
+
+# check format
+# cargo fmt --check --all
+
+# check clippy
+# cargo clippy --all-targets --workspace --all-features -- -D warnings
+
+# check doc tests
+# cargo test --doc --workspace --features mint,glam
+
+# run tests and generate coverage report
+# cargo +nightly llvm-cov --html --workspace --features mint,glam
+
+# generate docs
+# RUSTDOCFLAGS="--cfg docs" cargo +nightly doc --workspace --all-features
+
 name: CI
 
 on: [pull_request, push]
@@ -497,7 +515,7 @@ jobs:
         run: |
           echo "OFFLINE=--offline" >> $GITHUB_ENV
 
-      - run: cargo test --doc --workspace --features mint,glam $OFFLINE
+      - run: cargo test --doc --workspace --all-features $OFFLINE
 
       - run: sccache --show-stats
 
